@@ -1,0 +1,4 @@
+target
+*.sw?
+a.out
+.DS_Store
