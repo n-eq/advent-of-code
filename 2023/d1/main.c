@@ -4,7 +4,12 @@
     
 int is_digit_extended(char* p, int* value) {
 #ifdef PART1
-    return isdigit(*p);
+    if (isdigit(*p)) {
+        *value = *p - '0';
+        return 1;
+    } else {
+        return 0;
+    }
 #endif
 
     if (isdigit(*p)) {
