@@ -1,4 +1,4 @@
-// compile & run: cargo r
+// Curiously enough part1 takes more time than part2 (6 times)
 use std::collections::HashSet;
 
 type Point = (i32, i32);
@@ -108,30 +108,59 @@ fn main() {
             }
         }
     }
-    println!("part1: {}", part1);
+    println!("part1: {part1}");
 
     // part2
     let max = 4000000;
-    // sort by column (x)
+    let tuning_multiplier = 4000000u64;
+
+    // sort by column
     data.sort_by(|e1, e2| e1.0.cmp(&e2.0));
 
     'outer: for row in 0..=max {
         let mut col = 0;
-        while col <= max {
-            let mut found: bool = true;
-            for (s, b) in &data {
-                let ref_dist = taxicab_distance(s, b);
-                if taxicab_distance(s, &(col, row)) <= ref_dist {
-                    let delta_col = ref_dist - (s.1 - row).abs();
 
+        while col <= max {
+            // set to false as soon as we detect a sensor that has (col, row) within its range
+            let mut distress_beacon_found: bool = true;
+
+            let current = (col, row);
+            for (s, b) in &data {
+                if &(col, row) == s || &(col, row) == b {
+                    distress_beacon_found = false;
+                    continue;
+                }
+
+                let ref_dist = taxicab_distance(s, b);
+
+                // the current position is within the reachable range of (s, b)
+                // we'll break, and make sure we skip enough columns depending on the
+                // current range
+                if taxicab_distance(s, &current) <= ref_dist {
+
+                    /* we skip enough columns to be on the triangle limit
+                     * for example, P becomes Q (with the +1 below we'll skip all the range)
+                     *
+                     *     *        *
+                     *    ***      ***
+                     *   **P**    ****Q
+                     *  ***S***  ***S***
+                     *   *****    *****
+                     *    **B      **B
+                     *     *        *
+                     */
+                    let delta_col = ref_dist - (s.1 - row).abs();
                     col += (s.0 - col).signum() * (s.0 - col).abs() + delta_col;
-                    found = false;
+
+                    distress_beacon_found = false;
                     break;
                 }
             }
 
-            if found {
-                println!("part2: {}", col * max + row);
+            // there's only one, so break at the first matching position
+            if distress_beacon_found {
+                let result: u64 = (col as u64 * tuning_multiplier  + row as u64).try_into().unwrap();
+                println!("part2: {result}");
                 break 'outer;
             }
 
