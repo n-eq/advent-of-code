@@ -28,6 +28,34 @@ typedef struct position_s {
 
 #define BOUNDARY_CHECK(pi, pj) ((pi >= 0 && pi < NB_NODES && pj >= 0 && pj < NB_NODES))
 
+static FILE* parse_input(position_t* start) {
+    FILE *file = fopen(INPUT, "r");
+    if (file == NULL) {
+        perror("Error: can't open file.\n");
+    }
+
+    char line[256];
+
+    int i = 0;
+    while (fgets(line, sizeof(line), file)) {
+        if (line[0] == '\n') {
+            continue;
+        }
+
+        char* p = line;
+        memcpy(map[i], p, NB_NODES);
+
+        char* q;
+        if ((q = strchr(line, 'S'))) {
+            start->line = i;
+            start->col = (int) (q - p);
+        }
+
+        i++;
+    }
+    return file;
+}
+
 // Neighbors are adjacent positions (N, W, E, S) that are not out of bounds
 // and do not contain ground (.)
 static int get_neighbors(position_t p, position_t* neighbors) {
@@ -61,6 +89,40 @@ static int get_neighbors(position_t p, position_t* neighbors) {
     return count;
 }
 
+// taken from https://wrfranklin.org/Research/Short_Notes/pnpoly.html
+// basically a "finer" version of ray casting algorithm to determine if a point
+// is inside a polygon
+bool pnpoly(int nvert, int *vertx, int *verty, int testx, int testy) {
+  int i, j;
+  bool c = false;
+  for (i = 0, j = nvert-1; i < nvert; j = i++) {
+      if (((verty[i]>testy) != (verty[j]>testy)) &&
+          (testx < (vertx[j]-vertx[i]) * (testy-verty[i]) / (verty[j]-verty[i]) + vertx[i]) ) {
+          c = !c;
+      }
+  }
+  return c;
+}
+
+bool is_enclosed(int row, int col, position_t* polygon, int len) {
+    // filter out points that are edges of the polygon
+    for (int i = 0; i < len; i++) {
+        if (polygon[i].line == row && polygon[i].col == col) {
+            return false;
+        }
+    }
+
+    int* loopx = malloc(sizeof(position_t) * len);
+    int* loopy = malloc(sizeof(position_t) * len);
+
+    for (int idx = 0; idx < len; idx++) {
+        loopx[idx] = polygon[idx].line;
+        loopy[idx] = polygon[idx].col;
+    }
+
+    return pnpoly(len, loopx, loopy, row, col);
+}
+
 static int position_sort(const void * a, const void * b) {
     position_t p1 = *(position_t* ) a;
     position_t p2 = *(position_t* ) b;
@@ -72,33 +134,11 @@ static int position_sort(const void * a, const void * b) {
     }
 }
 
+
 int main() {
-    FILE *file = fopen(INPUT, "r");
-    if (file == NULL) {
-        printf("Error: can't open file.\n");
-        return 1;
-    }
-
-    char line[256];
-    
-    int i = 0;
     position_t start;
-    while (fgets(line, sizeof(line), file)) {
-        if (line[0] == '\n') {
-            continue;
-        }
 
-        char* p = line;
-        memcpy(map[i], p, NB_NODES);
-
-        char* q;
-        if ((q = strchr(line, 'S'))) {
-            start.line = i;
-            start.col = (int) (q - p);
-        }
-
-        i++;
-    }
+    FILE* file = parse_input(&start);
 
     // We start from 'S' position, and for each neighbor, we compute the distance
     // to loop back again to the start position, we keep track of the maximum distance
@@ -174,6 +214,7 @@ int main() {
             tmp_loop[tmp_loop_len++] = (position_t) { tmp.line, tmp.col };
             new_dist++;
         }
+        new_dist /= 2;
 
         if (new_dist > dist) {
             dist = new_dist;
@@ -184,19 +225,17 @@ int main() {
             loop_len = tmp_loop_len;
         }
     }
-
-    printf("loop start: %d, %d\n", start.line, start.col);
-    for (int i = 0; i < loop_len; ++i) {
-        printf("(%d, %d) -> ", loop[i].line, loop[i].col);
-    }
-    printf("\n");
-    qsort(loop, loop_len, sizeof(position_t), position_sort);
+    printf("part1: %d\n", dist);
 
     int enclosed = 0;
     for (int i = 0; i < NB_NODES; ++i) {
-//         enclosed += enclosed_count(i, loop, loop_len);
-        printf("new enclosed count: %d\n", enclosed);
+        for (int j = 0; j < NB_NODES; ++j) {
+            if (is_enclosed(i, j, loop, loop_len)) {
+                enclosed++;
+            }
+        }
     }
+    printf("part2: %d\n", enclosed);
 
     fclose(file);
 }
