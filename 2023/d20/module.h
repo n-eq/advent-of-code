@@ -104,8 +104,7 @@ event_t* pop(event_queue_t* queue) {
 
 void push_back(event_queue_t* queue, event_t event) {
     if (is_full(queue)) {
-//         perror("QUEUE FULL!");
-//         exit(5);
+        // this is no more needed actually
         size_t new_size = 1.1f * queue->size;
         queue->events = (event_t* ) realloc(queue->events, new_size * sizeof(event_t));
         queue->size = new_size;
