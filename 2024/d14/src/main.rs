@@ -1,9 +1,11 @@
+use average::Variance;
+
 const WIDTH: isize = 101;
 const HEIGHT: isize = 103;
 // const WIDTH: isize = 11;
 // const HEIGHT: isize = 7;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 struct Robot {
     pos: (usize, usize),
     velocity: (isize, isize),
@@ -68,6 +70,8 @@ fn parse_robots(file: &str) -> Vec<Robot> {
         .collect::<Vec<Robot>>()
 }
 
+// was used to place the robots in a [u8] buffer to write to a png file
+#[allow(dead_code)]
 fn place_robots_in_map(robots: &Vec<Robot>) -> Vec<Vec<char>> {
     let mut map = vec![vec!['.'; WIDTH as usize]; HEIGHT as usize];
     robots.iter().for_each(|r| {
@@ -85,20 +89,7 @@ fn place_robots_in_map(robots: &Vec<Robot>) -> Vec<Vec<char>> {
     map
 }
 
-fn show_map(map: &mut Vec<Vec<char>>) {
-    for l in map {
-        for c in l {
-            if c == &'.' {
-                print!(" ");
-            } else {
-                print!("{c}");
-            }
-        }
-    }
-    println!();
-}
-
-fn safety_factor(robots: &Vec<Robot>) -> usize {
+fn safety_factor(robots: &Vec<Robot>) -> Vec<usize> {
     let mut robots_in_quadrants: Vec<usize> = vec![0; 4]; // UL, UR, LL, LR
 
     let binding = Vec::from_iter(0..WIDTH);
@@ -128,24 +119,66 @@ fn safety_factor(robots: &Vec<Robot>) -> usize {
             }
         }
     }
-    robots_in_quadrants.iter().product()
+    //     robots_in_quadrants.iter().product()
+    robots_in_quadrants
 }
 
 fn main() {
     let args = std::env::args().collect::<Vec<String>>();
     let input = args.get(1).map_or("input_test", |v| v);
     let mut robots = parse_robots(input);
-    println!("{robots:?}");
 
-    let mut map: Vec<Vec<char>> = vec![];
     let mut part1: usize = 0;
-    for i in 0..100 {
+    let mut part2: usize = 0;
+    for i in 0..WIDTH * HEIGHT {
         robots.iter_mut().for_each(|r| r.move_in_space());
-        map = place_robots_in_map(&robots);
+
+        if i > 100 {
+            /* Uncomment if you want to save the maps to png files */
+            /*
+            // 0: empty position, 255 (white): at least one robot
+            let map = place_robots_in_map(&robots);
+            let bytes = map
+                .iter()
+                .flatten()
+                .map(|c| if c == &'.' { 0 } else { 255 })
+                .collect::<Vec<u8>>();
+
+            let mut image_buf =
+                image::DynamicImage::new_luma8(WIDTH as u32, HEIGHT as u32).to_luma8();
+            for (y, x, pixel) in image_buf.enumerate_pixels_mut() {
+                *pixel = image::Luma([bytes[x as usize + (y as usize) * HEIGHT as usize]]);
+            }
+            image_buf.save(format!("files/{}.png", i)).unwrap();
+            */
+
+            // After hours of research, for part2 you need to notice
+            // that the easter egg (a christmas tree) means the robots are forming
+            // a very dense region in the map
+            //
+            // This means the variance of their respective positions (x,y) is very small
+            // (which in other terms means that the values of (x,y) are too close one to another)
+            // the heuristic is finding the iteration at which the variances are both < 1, there is
+            // only one time this happens (before cycling after WIDTH * HEIGHT iterations)
+            //
+            // You can also check with the commented code above (in my case it's a 45° rotated
+            // christmas tree)
+
+            let xv: Variance = robots.iter().map(|r| r.pos.0).map(|q| q as f64).collect();
+            let yv: Variance = robots.iter().map(|r| r.pos.1).map(|q| q as f64).collect();
+
+            if (xv.variance_of_mean() as usize) < 1 && (yv.variance_of_mean() as usize) < 1 {
+                part2 = i as usize;
+                break;
+            }
+        }
+
+        if i == 100 {
+            part1 = safety_factor(&robots).iter().product::<usize>();
+        }
     }
 
-    part1 = safety_factor(&robots);
-    println!("part1 {}", part1);
+    println!("{part1 } {part2}");
 }
 
 #[cfg(test)]
@@ -161,6 +194,6 @@ mod tests {
         for _ in 0..100 {
             robots.iter_mut().for_each(|r| r.move_in_space());
         }
-        assert_eq!(safety_factor(&robots), 12);
+        assert_eq!(safety_factor(&robots).iter().product::<usize>(), 12);
     }
 }
