@@ -1,5 +1,3 @@
-use rayon::prelude::*;
-
 type Regs = [u64; 3];
 type Operand = u8;
 
@@ -91,7 +89,7 @@ impl Computer {
         }
     }
 
-    fn exec_single(&mut self, ins_op: (Instruction, Operand)) -> Option<String> {
+    fn exec_single(&mut self, ins_op: (Instruction, Operand)) -> Option<u64> {
         let (next_instruction, op) = ins_op;
         match next_instruction {
             Instruction::Adv => self.regs[0] /= 2u64.pow(self.get_combo_value(op) as u32),
@@ -105,7 +103,7 @@ impl Computer {
                 }
             }
             Instruction::Bxc => self.regs[1] ^= self.regs[2],
-            Instruction::Out => return Some(((self.get_combo_value(op) as u64) % 8).to_string()),
+            Instruction::Out => return Some((self.get_combo_value(op) as u64) % 8),
             Instruction::Bdv => {
                 self.regs[1] = self.regs[0] / 2u64.pow(self.get_combo_value(op) as u32)
             }
@@ -117,94 +115,58 @@ impl Computer {
         None
     }
 
-    fn exec(&mut self, ins_op: &Vec<(Instruction, Operand)>) -> String {
-        let mut outputs: Vec<u64> = vec![];
-
-        while let Some((next_instruction, op)) = ins_op.get(self.ip / 2) {
-            let op = *op;
-            match next_instruction {
-                Instruction::Adv => self.regs[0] /= 2u64.pow(self.get_combo_value(op) as u32),
-                Instruction::Bxl => self.regs[1] ^= op as u64,
-                Instruction::Bst => self.regs[1] = (self.get_combo_value(op) as u64) % 8,
-                Instruction::Jnz => {
-                    if self.regs[0] != 0 {
-                        self.ip = op as usize;
-                        // skip ip += 2
-                        continue;
-                    }
-                }
-                Instruction::Bxc => self.regs[1] ^= self.regs[2],
-                Instruction::Out => outputs.push((self.get_combo_value(op) as u64) % 8),
-                Instruction::Bdv => {
-                    self.regs[1] = self.regs[0] / 2u64.pow(self.get_combo_value(op) as u32)
-                }
-                Instruction::Cdv => {
-                    self.regs[2] = self.regs[0] / 2u64.pow(self.get_combo_value(op) as u32)
-                }
-            }
-            self.ip += 2;
-        }
-
-        outputs
+    fn exec(&mut self, ins_op: &Vec<(Instruction, Operand)>) -> Vec<u64> {
+        ins_op
             .iter()
-            .map(|o| o.to_string())
-            .collect::<Vec<String>>()
-            .join(",")
+            .map(|ins_op| self.exec_single(*ins_op))
+            .flatten()
+            .collect()
     }
 
-    fn find_rega(
+    #[allow(dead_code)]
+    fn nth_output(&self, a: u64, n: usize) -> u64 {
+        // after spending some time using a pen and a paper, I found that for my input:
+        // if A = An A(n-1) A(n-2) ... A(1) A(0)
+        // where A(i) is a number in base 8 (3 bits)
+        // then
+        // out = (an ^ 1 ^ 5) ^ (A / 2^(An ^1))
+        let an: u32 = (a >> (3 * n) & 0b111) as u32;
+        ((an ^ 4) as u64 ^ (a / 2u64.pow(an ^ 1))) % 8
+    }
+
+    // Execute instructions with a given value for register A
+    fn sim_rega(&self, rega: u64, instructions: &Vec<(Instruction, Operand)>) -> u64 {
+        let mut c = self.clone();
+        c.regs[0] = rega;
+
+        c.exec(instructions)[0]
+    }
+
+    // Find the value of register A that will produce the given program
+    // This is a brute force solution, but it works by iterating over all possible values of
+    // register A, taking chunks of 3 bits each time, and checking if the output is the expected
+    // one (for part 2 A is of length 48 bits = 16 chunks of 3 bits)
+    fn find_reg_a(
         &self,
+        ainit: u64,
+        prog: &Vec<u64>,
         instructions: &Vec<(Instruction, Operand)>,
-        program_str: String,
+        i: usize,
     ) -> Option<u64> {
-        let start = std::time::Instant::now();
+        let next = |a| ainit << 3 | a;
+        if i == 0 {
+            for a in 0..8 {
+                if self.sim_rega(next(a), instructions) == prog[0] {
+                    return Some(next(a));
+                }
+            }
+        }
 
-        // number of values = number of ',' + 1
-        let numbers = program_str.chars().filter(|c| c == &',').count() as u32 + 1;
-
-        let initial_computer = self.clone();
-
-        /*
-         * a: 0..7 -> 1 number
-         * a: 8..63 -> 2 numbers
-         * a: 64..511 -> 3 numbers (8^2..8^3 -> 3 numbers)
-         *
-         * OR: 8^(n-1)..(8^n)-1 -> n numbers
-         * a: 8^n..8^(n+1)-1 -> n + 1 numbers (or 2^(3n)..2^(3n + 3) -1)
-         * we want:
-         * 16 numbers:
-         * it means a should be between: 8^16 and 8^17 -1, i.e.: 2^48 and 2^51 -1
-         */
-        // we should look for rega value in this space
-        let rega_min = 8u64.pow(numbers - 1);
-        let rega_max = 8u64.pow(numbers) - 1;
-        let space_size = rega_max - rega_min;
-
-        let mut last_elapsed = 0;
-        for a in 0..=rega_max {
-            let progress = (100 as f32 * (a.abs_diff(rega_min) / space_size) as f32) as u32;
-            let elapsed = start.elapsed().as_secs() / 60;
-
-            let mut c = initial_computer.clone();
-            c.regs[0] = a;
-
-            let output = c.exec(&instructions);
-            //             assert!(output.len() == program_str.len());
-
-            //             println!("chkeing {a:?} , {output:?} {program_str:?}");
-            //             if (a as f64).log(8f64).fract() == 0.0 {
-            println!("dbg {a:?} , {:>20},  {:>20}", output, program_str);
-            //             }
-
-            //             if elapsed % 2 == 0 && last_elapsed != elapsed {
-            //                 println!("{:?} progress: {progress:?}% {}/{}", elapsed, a, rega_max);
-            //                 println!("{a:?} , {output:?} {program_str:?}");
-            //                 last_elapsed = elapsed;
-            //             }
-
-            if program_str == output {
-                println!("FOUND !!!!!!!!!!!!!!");
-                return Some(a);
+        for a in 0..8 {
+            if self.sim_rega(next(a), instructions) == prog[i] {
+                if let Some(res) = self.find_reg_a(next(a), prog, instructions, i - 1) {
+                    return Some(res);
+                }
             }
         }
         None
@@ -215,24 +177,28 @@ fn main() {
     let args = std::env::args().collect::<Vec<String>>();
     let input = std::fs::read_to_string(args.get(1).map_or("input_test", |v| v)).unwrap();
 
-    let (mut computer, instructions) = parse_input(&input);
+    let (computer, instructions) = parse_input(&input);
 
-    let part1 = computer.clone().exec(&instructions);
-    println!("{part1:?}");
-    */
-
-    let program_str = instructions
+    let part1 = computer
+        .clone()
+        .exec(&instructions)
         .iter()
-        .map(|(i, op)| (*i, *op))
-        .map(|(i, op)| [(i as u64).to_string(), (op as u64).to_string()].join(","))
+        .map(|o| o.to_string())
         .collect::<Vec<String>>()
         .join(",");
+    println!("part1: {part1}");
 
+    let prog = instructions
+        .iter()
+        .map(|(i, op)| (*i, *op))
+        .map(|(i, op)| vec![(i as u64), (op as u64)])
+        .flatten()
+        .collect::<Vec<u64>>();
 
-    println!(
-        "part2: {:?}",
-        computer.find_rega(&instructions, program_str)
-    );
+    let part2 = computer
+        .find_reg_a(0, &prog, &instructions, prog.len() - 1)
+        .unwrap();
+    println!("part2: {part2:?}");
 }
 
 #[cfg(test)]
