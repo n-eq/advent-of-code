@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 type Board = Vec<Vec<usize>>;
 
 fn parse_input(lines: &Vec<&str>) -> (Vec<usize> /* draws */, Vec<Board>) {
@@ -36,46 +37,53 @@ fn main() {
 
     let (draws, boards) = parse_input(&lines);
 
-    let mut results = Vec::<usize>::new();
-    'outer: for i in 5..draws.len() {
+    let mut bingos: Vec<(
+        usize, /* board index */
+        usize, /* draw */
+        usize, /* result */
+    )> = vec![];
+
+    // we need at least 5 draws to make a bingo
+    for i in 5..draws.len() {
         let slice = draws[..i].to_vec();
 
-        for board in &boards {
-            for line in board {
-                if line.iter().all(|e| slice.contains(e)) {
-                    // found horizontal
-                    let sum = board
-                        .into_iter()
-                        .map(|l| l.iter().filter(|n| !slice.contains(n)).sum())
-                        .collect::<Vec<usize>>()
-                        .into_iter()
-                        .sum::<usize>();
-                    results.push(draws[i - 1] * sum);
-                    continue 'outer;
+        for (b, board) in boards.iter().enumerate() {
+            let mut found = board.iter().any(|l| l.iter().all(|e| slice.contains(e)));
+
+            if !found {
+                for col in 0..board[0].len() {
+                    let mut vec: Vec<usize> = vec![];
+                    for l in 0..board.len() {
+                        vec.push(board[l][col]);
+                    }
+
+                    if vec.iter().all(|e| slice.contains(e)) {
+                        found = true;
+                        break;
+                    }
                 }
             }
 
-            for col in 0..board[0].len() {
-                let mut vec: Vec<usize> = vec![];
-                for l in 0..board.len() {
-                    vec.push(board[l][col]);
-                }
-
-                if vec.iter().all(|e| slice.contains(e)) {
-                    // found horizontal
-                    let sum = board
-                        .into_iter()
-                        .map(|l| l.iter().filter(|n| !slice.contains(n)).sum())
-                        .collect::<Vec<usize>>()
-                        .into_iter()
-                        .sum::<usize>();
-                    results.push(draws[i - 1] * sum);
-                    continue 'outer;
-                }
+            if found {
+                let sum = board
+                    .iter()
+                    .flatten()
+                    .filter(|e| !slice.contains(*e))
+                    .sum::<usize>();
+                bingos.push((b, draws[i - 1], draws[i - 1] * sum));
             }
         }
     }
 
-    println!("part1 {:?}", results[0]);
-    println!("part2 {:?}", results[results.len() - 1]);
+    println!("part1 {:?}", bingos[0].2);
+
+    let mut part2 = 0usize;
+    let mut s: HashSet<usize> = HashSet::new();
+    for (b, _, res) in bingos {
+        if s.insert(b) && s.len() == boards.len() {
+            part2 = res;
+            break;
+        }
+    }
+    println!("part2: {part2:?}");
 }
