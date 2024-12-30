@@ -116,7 +116,7 @@ pub fn main() {
 
 #[cfg(test)]
 mod tests {
-    use crate::get_machines;
+    use super::get_machines;
     #[test]
     fn test_example_input() {
         let m = get_machines(std::fs::read_to_string("input_test").unwrap())[0];

@@ -202,7 +202,7 @@ pub fn main() {
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
+    use super::*;
 
     #[test]
     fn test_parse_example_input() {
