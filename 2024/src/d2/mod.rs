@@ -16,8 +16,8 @@ fn safe_report(v: Vec<u8>) -> bool {
 }
 
 pub fn main() {
-    //     let reports: Vec<Vec<u8>> = include_str!("input_test")
-    let reports: Vec<Vec<u8>> = include_str!("input")
+    let reports: Vec<Vec<u8>> = std::fs::read_to_string(crate::utils::input!())
+        .unwrap()
         .lines()
         .collect::<Vec<&str>>()
         .iter()

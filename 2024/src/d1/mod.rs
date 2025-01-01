@@ -1,7 +1,10 @@
 pub fn main() {
     let mut left: Vec<u32> = vec![];
     let mut right: Vec<u32> = vec![];
-    for line in include_str!("input").lines() {
+    for line in std::fs::read_to_string(crate::utils::input!())
+        .unwrap()
+        .lines()
+    {
         let mut numbers = line.split("   ");
         left.push(numbers.next().unwrap().parse::<u32>().unwrap());
         right.push(numbers.next().unwrap().parse::<u32>().unwrap());

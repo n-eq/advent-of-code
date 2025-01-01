@@ -1,14 +1,14 @@
 use regex::Regex;
 
 pub fn main() {
-    let input = include_str!("input");
+    let input = std::fs::read_to_string(crate::utils::input!()).unwrap();
     let re = Regex::new(r"(mul\([0-9]{1,3},[0-9]{1,3}\))").unwrap();
 
     let (mut part1, mut part2) = (0usize, 0usize);
 
     let mut prev_end = 0;
     let mut disable = false;
-    for mul in re.find_iter(input) {
+    for mul in re.find_iter(&input) {
         if prev_end != 0 && prev_end < mul.start() {
             // look for the most recent do/don't in the range [prev_end, current.start]
             let re_dos = Regex::new(r"(do\(\))").unwrap();
