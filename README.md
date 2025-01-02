@@ -2,9 +2,12 @@
 
 Solutions to (some) of the [Advent of Code](https://adventofcode.com/) challenges.
 
-Year | 2021 | 2022 | 2023 | 2024
---- | --- | --- | --- |--- 
-Status | ONGOING | ONGOING | ONGOING | ONGOING
+| YEAR | STATUS  |
+|------|---------|
+| 2021 | ONGOING |
+| 2022 | ONGOING |
+| 2023 | ONGOING |
+| 2024 | ONGOING |
 
 Mainly in C, Rust, and sometimes Python.
 
