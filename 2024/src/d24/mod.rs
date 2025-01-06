@@ -74,14 +74,19 @@ pub(crate) fn main() {
         gates.insert(op.op3, res);
     }
 
-    let mut v = gates
-        .clone()
+    let mut z = gates
         .into_iter()
         .filter(|(k, _)| k.starts_with("z"))
-        .collect::<Vec<(&str, GateValue)>>();
-    v.sort_by(|(k1, _), (k2, _)| k1.cmp(k2));
-    v.reverse();
+        .collect::<Vec<(GateName, GateValue)>>();
+    z.sort_by(|(k1, _), (k2, _)| k2.cmp(k1));
 
-    let part1 = v.iter().fold(0, |acc, (_, val)| acc * 2 + val);
+    let part1 = z.iter().fold(0, |acc, (_, val)| acc * 2 + val);
     println!("{part1}");
+
+    // For part2, I used graphviz to identify the swapped gates, see
+    // graph.dot for the input files (reconstructed using Vimscript),
+    // and graph.svg for the result data.
+    // My main "contribution" to help visualize is to mark xii and yii
+    // nodes as "max" so they're at the top of the image, and zii as "sink"
+    // to have them at the bottom as much as possible.
 }
