@@ -11,3 +11,99 @@ average = "^0"
 num = "^0"
 regex = "^1"
 petgraph = "^0"
+
+[lib]
+name = "aoc"
+path = "src/lib.rs"
+
+[[bin]]
+name = "d1"
+path = "bin/d1.rs"
+
+[[bin]]
+name = "d2"
+path = "bin/d2.rs"
+
+[[bin]]
+name = "d3"
+path = "bin/d3.rs"
+
+[[bin]]
+name = "d4"
+path = "bin/d4.rs"
+
+[[bin]]
+name = "d5"
+path = "bin/d5.rs"
+
+[[bin]]
+name = "d6"
+path = "bin/d6.rs"
+
+[[bin]]
+name = "d7"
+path = "bin/d7.rs"
+
+[[bin]]
+name = "d8"
+path = "bin/d8.rs"
+
+[[bin]]
+name = "d9"
+path = "bin/d9.rs"
+
+[[bin]]
+name = "d10"
+path = "bin/d10.rs"
+
+[[bin]]
+name = "d11"
+path = "bin/d11.rs"
+
+[[bin]]
+name = "d12"
+path = "bin/d12.rs"
+
+[[bin]]
+name = "d13"
+path = "bin/d13.rs"
+
+[[bin]]
+name = "d14"
+path = "bin/d14.rs"
+
+[[bin]]
+name = "d15"
+path = "bin/d15.rs"
+
+[[bin]]
+name = "d16"
+path = "bin/d16.rs"
+
+[[bin]]
+name = "d17"
+path = "bin/d17.rs"
+
+[[bin]]
+name = "d18"
+path = "bin/d18.rs"
+
+[[bin]]
+name = "d19"
+path = "bin/d19.rs"
+
+[[bin]]
+name = "d20"
+path = "bin/d20.rs"
+
+[[bin]]
+name = "d22"
+path = "bin/d22.rs"
+
+[[bin]]
+name = "d23"
+path = "bin/d23.rs"
+
+[[bin]]
+name = "d24"
+path = "bin/d24.rs"
