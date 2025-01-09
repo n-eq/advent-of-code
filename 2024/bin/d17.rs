@@ -96,7 +96,7 @@ impl Computer {
         match next_instruction {
             Instruction::Adv => self.regs[0] /= 2u64.pow(self.get_combo_value(op) as u32),
             Instruction::Bxl => self.regs[1] ^= op as u64,
-            Instruction::Bst => self.regs[1] = (self.get_combo_value(op) as u64) % 8,
+            Instruction::Bst => self.regs[1] = self.get_combo_value(op) % 8,
             Instruction::Jnz => {
                 if self.regs[0] != 0 {
                     self.ip = op as usize;
@@ -105,7 +105,7 @@ impl Computer {
                 }
             }
             Instruction::Bxc => self.regs[1] ^= self.regs[2],
-            Instruction::Out => return Some((self.get_combo_value(op) as u64) % 8),
+            Instruction::Out => return Some(self.get_combo_value(op) % 8),
             Instruction::Bdv => {
                 self.regs[1] = self.regs[0] / 2u64.pow(self.get_combo_value(op) as u32)
             }
@@ -120,8 +120,7 @@ impl Computer {
     fn exec(&mut self, ins_op: &Vec<(Instruction, Operand)>) -> Vec<u64> {
         ins_op
             .iter()
-            .map(|ins_op| self.exec_single(*ins_op))
-            .flatten()
+            .filter_map(|ins_op| self.exec_single(*ins_op))
             .collect()
     }
 
@@ -138,7 +137,7 @@ impl Computer {
 
     // Execute instructions with a given value for register A
     fn sim_rega(&self, rega: u64, instructions: &Vec<(Instruction, Operand)>) -> u64 {
-        let mut c = self.clone();
+        let mut c = *self;
         c.regs[0] = rega;
 
         c.exec(instructions)[0]
@@ -192,8 +191,7 @@ pub fn main() {
     let prog = instructions
         .iter()
         .map(|(i, op)| (*i, *op))
-        .map(|(i, op)| vec![(i as u64), (op as u64)])
-        .flatten()
+        .flat_map(|(i, op)| vec![(i as u64), (op as u64)])
         .collect::<Vec<u64>>();
 
     let part2 = computer

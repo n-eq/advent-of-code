@@ -6,7 +6,7 @@ use std::collections::HashSet;
 // I GOT THIS WORKING FROM THE FIRST TRY!
 fn part1(map: &Vec<Vec<char>>, pos: (isize, isize)) -> usize {
     let mut visited: HashSet<(isize, isize)> = HashSet::new();
-    let mut guard = pos.clone();
+    let mut guard = pos;
     let mut local_map = map.clone();
     loop {
         visited.insert(guard);
@@ -61,12 +61,12 @@ fn part1(map: &Vec<Vec<char>>, pos: (isize, isize)) -> usize {
 // bounds config
 fn part2(map: &Vec<Vec<char>>, pos: (isize, isize)) -> bool {
     let mut visited: HashSet<(isize, isize, char /* direction */)> = HashSet::new();
-    let mut guard = pos.clone();
+    let mut guard = pos;
     let mut local_map = map.clone();
     loop {
         if !visited.insert((
-            guard.0 as isize,
-            guard.1 as isize,
+            guard.0,
+            guard.1,
             local_map[guard.0 as usize][guard.1 as usize],
         )) {
             return true;

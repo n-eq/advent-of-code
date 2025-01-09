@@ -20,7 +20,7 @@ impl Number {
     }
 
     fn next(&self) -> Number {
-        let mut res = self.clone();
+        let mut res = *self;
         res.mix(res.0 << 6);
         res.prune();
 
@@ -44,9 +44,7 @@ impl Add for Number {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
-        Self {
-            0: self.0 + other.0,
-        }
+        Self(self.0 + other.0)
     }
 }
 
@@ -55,7 +53,7 @@ impl Sum<Self> for Number {
     where
         I: Iterator<Item = Self>,
     {
-        iter.fold(Self(0), |a, b| Add::add(a, b))
+        iter.fold(Self(0), Add::add)
     }
 }
 
@@ -65,20 +63,19 @@ pub fn main() {
     let numbers = std::fs::read_to_string(input)
         .unwrap()
         .lines()
-        .map(|l| Number::new(l))
+        .map(Number::new)
         .collect::<Vec<Number>>();
 
     let secrets_map: HashMap<Number, Vec<Number>> = numbers
         .iter()
         .map(|n| {
-            let mut res = n.clone();
+            let mut res = *n;
             (
-                n.clone(),
+                *n,
                 (0..2000)
-                    .into_iter()
                     .map(|_| {
                         res = res.next();
-                        res.clone()
+                        res
                     })
                     .collect(),
             )

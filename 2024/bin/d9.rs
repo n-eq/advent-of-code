@@ -63,8 +63,7 @@ fn compact(blocks: &mut Vec<Block>) -> usize {
 fn compact_p2(mut blocks: Vec<Block>) -> usize {
     let diskfile_blocks: Vec<Block> = blocks
         .iter()
-        .filter(|b| b.form != BlockType::FreeSpace)
-        .map(|b| *b)
+        .filter(|b| b.form != BlockType::FreeSpace).copied()
         .rev()
         .collect::<Vec<Block>>();
 
@@ -106,7 +105,7 @@ fn compact_p2(mut blocks: Vec<Block>) -> usize {
 fn flatten(blocks: &Vec<Block>) -> Vec<Block> {
     blocks
         .iter()
-        .map(|b| {
+        .flat_map(|b| {
             if b.size == 1 {
                 vec![*b]
             } else {
@@ -119,7 +118,6 @@ fn flatten(blocks: &Vec<Block>) -> Vec<Block> {
                 ]
             }
         })
-        .flatten()
         .collect::<Vec<Block>>()
 }
 

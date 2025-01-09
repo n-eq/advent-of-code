@@ -71,7 +71,7 @@ impl Map {
                 self.get_neighbors_with_cheat(*pt, max_cheat)
                     .into_iter()
                     .filter_map(|n| {
-                        let d = pt.0.abs_diff(n.0) + pt.1.abs_diff(n.1) as usize;
+                        let d = pt.0.abs_diff(n.0) + pt.1.abs_diff(n.1);
                         let nv = path_values.get(&n).unwrap_or(&0);
                         let pv = path_values[pt];
                         (*nv > (pv + d)).then(|| *nv - pv - d)

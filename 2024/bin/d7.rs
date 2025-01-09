@@ -20,7 +20,7 @@ fn solve(equations: &Vec<(usize, Vec<&str>)>) -> (usize, usize) {
         {
             let mut v_to_eval = vec![vals[0]];
             for i in 0..perm.len() {
-                v_to_eval.push(&perm[i]);
+                v_to_eval.push(perm[i]);
                 v_to_eval.push(vals[i + 1]);
             }
             let mut res = match v_to_eval[1] {

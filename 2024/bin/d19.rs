@@ -13,8 +13,8 @@ fn is_possible(towel: &String, patterns: &Vec<String>, memo: &mut HashMap<String
             res += 1;
         }
 
-        if towel.starts_with(&*p) {
-            let right = towel.replacen(&*p, "", 1);
+        if towel.starts_with(p) {
+            let right = towel.replacen(p, "", 1);
             res += is_possible(&right.to_string(), patterns, memo);
         }
     }
@@ -28,7 +28,7 @@ pub fn main() {
     let mut towels: Vec<String> = Vec::new();
 
     for line in std::fs::read_to_string(input!()).unwrap().lines() {
-        if line == "" {
+        if line.is_empty() {
             continue;
         }
 

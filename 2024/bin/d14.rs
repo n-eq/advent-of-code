@@ -67,7 +67,7 @@ fn parse_robots(file: &str) -> Vec<Robot> {
     std::fs::read_to_string(file)
         .unwrap()
         .lines()
-        .map(|l| Robot::new(l))
+        .map(Robot::new)
         .collect::<Vec<Robot>>()
 }
 
@@ -112,12 +112,10 @@ fn safety_factor(robots: &Vec<Robot>) -> Vec<usize> {
             } else {
                 robots_in_quadrants[3] += 1; // LL
             }
+        } else if splits_y_up.contains(&(r.pos.1 as isize)) {
+            robots_in_quadrants[1] += 1; // UR
         } else {
-            if splits_y_up.contains(&(r.pos.1 as isize)) {
-                robots_in_quadrants[1] += 1; // UR
-            } else {
-                robots_in_quadrants[2] += 1; // LR
-            }
+            robots_in_quadrants[2] += 1; // LR
         }
     }
     //     robots_in_quadrants.iter().product()

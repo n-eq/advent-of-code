@@ -11,7 +11,7 @@ fn safe_report(v: Vec<u8>) -> bool {
     };
 
     v.windows(2).all(|w| {
-        (w[0] as i8 - w[1] as i8) as i8 * diff > 0
+        (w[0] as i8 - w[1] as i8) * diff > 0
             && w[0].abs_diff(w[1]) >= 1
             && w[0].abs_diff(w[1]) <= 3
     })

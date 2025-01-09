@@ -62,7 +62,7 @@ fn find_paths(
 fn get_rating(map: &Vec<Vec<usize>>, trailhead: Point) -> usize {
     map.iter()
         .enumerate()
-        .map(|(i, row)| {
+        .flat_map(|(i, row)| {
             let mut res: Vec<Point> = vec![];
             res.extend(
                 row.iter()
@@ -72,11 +72,10 @@ fn get_rating(map: &Vec<Vec<usize>>, trailhead: Point) -> usize {
             );
             res
         })
-        .flatten()
         .map(|hiking_trail| {
             let mut paths: Vec<Point> = vec![];
             HashSet::<Vec<Point>>::from_iter(
-                find_paths(map, trailhead, hiking_trail, &mut paths).into_iter(),
+                find_paths(map, trailhead, hiking_trail, &mut paths),
             )
             .len()
         })
@@ -121,7 +120,7 @@ pub fn main() {
     let input = input!();
 
     let mut map: Vec<Vec<usize>> = vec![];
-    for (_, l) in std::fs::read_to_string(input).unwrap().lines().enumerate() {
+    for l in std::fs::read_to_string(input).unwrap().lines() {
         map.push(
             l.chars()
                 .map(|c| c.to_digit(10).unwrap_or(u32::MAX) as usize)
@@ -135,7 +134,7 @@ pub fn main() {
     let results = map
         .iter()
         .enumerate()
-        .map(|(i, row)| {
+        .flat_map(|(i, row)| {
             let mut res: Vec<Point> = vec![];
             res.extend(
                 row.iter()
@@ -145,7 +144,6 @@ pub fn main() {
             );
             res
         })
-        .flatten()
         .map(|t| (get_score(&map, t), get_rating(&map, t)))
         .collect::<Vec<(usize, usize)>>()
         .iter()

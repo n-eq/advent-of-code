@@ -14,13 +14,13 @@ fn parse_input(lines: Vec<&str>) -> (Rules, Vec<Vec<usize>>) {
                 .map(|s| s.parse::<usize>().unwrap())
                 .collect::<Vec<usize>>();
             let (lhs, rhs) = (pages[0], pages[1]);
-            if rules.contains_key(&lhs) {
+            if let std::collections::hash_map::Entry::Vacant(e) = rules.entry(lhs) {
+                // insert directly
+                e.insert(vec![rhs]);
+            } else {
                 if let Some(vals) = rules.get_mut(&lhs) {
                     vals.push(rhs);
                 }
-            } else {
-                // insert directly
-                rules.insert(lhs, vec![rhs]);
             }
         } else if line.contains(",") {
             updates.push(
@@ -39,16 +39,16 @@ fn reorder_faulty_update(update: &mut Vec<usize>, rules: &Rules) -> usize {
     use std::cmp::Ordering;
 
     update.sort_by(|a, b| {
-        if let Some(r) = rules.get(&a) {
-            if r.contains(&b) {
+        if let Some(r) = rules.get(a) {
+            if r.contains(b) {
                 return Ordering::Less;
             }
-        } else if let Some(r) = rules.get(&b) {
-            if r.contains(&a) {
+        } else if let Some(r) = rules.get(b) {
+            if r.contains(a) {
                 return Ordering::Greater;
             }
         }
-        return std::cmp::Ordering::Equal;
+        std::cmp::Ordering::Equal
     });
     update[update.len() / 2]
 }

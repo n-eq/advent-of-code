@@ -5,7 +5,7 @@ macro_rules! input {
         std::env::args()
             .collect::<Vec<String>>()
             .get(1)
-            .map_or(crate::get_test_input(module_path!()), |v| v.clone())
+            .map_or($crate::get_test_input(module_path!()), |v| v.clone())
     };
 }
 

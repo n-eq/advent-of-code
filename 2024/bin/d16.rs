@@ -107,9 +107,7 @@ pub fn main() {
     let part2 = HashSet::<Point>::from_iter(
         all_shortest_paths
             .into_iter()
-            .map(|p| p.iter().map(|(tile, _)| *tile).collect::<Vec<Point>>())
-            .flatten()
-            .into_iter(),
+            .flat_map(|p| p.iter().map(|(tile, _)| *tile).collect::<Vec<Point>>()),
     )
     .len();
     println!("{part1} {part2}");

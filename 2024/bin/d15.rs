@@ -70,7 +70,7 @@ impl Problem {
         let mut data: Vec<Vec<Tile>> = vec![];
         let mut moves: Vec<Move> = vec![];
         for line in input.lines() {
-            if line == "" {
+            if line.is_empty() {
                 continue;
             }
 
@@ -164,16 +164,14 @@ impl Problem {
                             } else {
                                 false
                             }
-                        } else {
-                            if self.try_move(next, m, apply) {
-                                if apply {
-                                    self.data[next.0 as usize][next.1 as usize] = current_tile;
-                                    self.data[p.0 as usize][p.1 as usize] = Empty;
-                                }
-                                true
-                            } else {
-                                false
+                        } else if self.try_move(next, m, apply) {
+                            if apply {
+                                self.data[next.0 as usize][next.1 as usize] = current_tile;
+                                self.data[p.0 as usize][p.1 as usize] = Empty;
                             }
+                            true
+                        } else {
+                            false
                         }
                     }
                     WarehouseBoxRight => {
@@ -189,16 +187,14 @@ impl Problem {
                             } else {
                                 false
                             }
-                        } else {
-                            if self.try_move(next, m, apply) {
-                                if apply {
-                                    self.data[next.0 as usize][next.1 as usize] = current_tile;
-                                    self.data[p.0 as usize][p.1 as usize] = Empty;
-                                }
-                                true
-                            } else {
-                                false
+                        } else if self.try_move(next, m, apply) {
+                            if apply {
+                                self.data[next.0 as usize][next.1 as usize] = current_tile;
+                                self.data[p.0 as usize][p.1 as usize] = Empty;
                             }
+                            true
+                        } else {
+                            false
                         }
                     }
                     WarehouseBox => {
@@ -265,8 +261,7 @@ impl Problem {
     fn get(&self, p: Point) -> Option<Tile> {
         self.data
             .get(p.0 as usize)
-            .and_then(|l| l.get(p.1 as usize))
-            .map(|p| *p)
+            .and_then(|l| l.get(p.1 as usize)).copied()
     }
 
     fn solve(&mut self) -> usize {
@@ -365,11 +360,11 @@ mod tests {
 ####################"
                 .to_string(),
         );
-        assert_eq!(false, map.try_move((7, 4), &Move::Up, false));
-        assert_eq!(true, map.try_move((4, 6), &Move::Up, false));
-        assert_eq!(false, map.try_move((2, 12), &Move::Up, false));
+        assert!(!map.try_move((7, 4), &Move::Up, false));
+        assert!(map.try_move((4, 6), &Move::Up, false));
+        assert!(!map.try_move((2, 12), &Move::Up, false));
 
-        assert_eq!(true, map.try_move((6, 10), &Move::Up, false));
-        assert_eq!(false, map.try_move((6, 12), &Move::Up, false));
+        assert!(map.try_move((6, 10), &Move::Up, false));
+        assert!(!map.try_move((6, 12), &Move::Up, false));
     }
 }

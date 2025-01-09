@@ -26,7 +26,7 @@ fn part1(lines: &Vec<Vec<char>>) -> usize {
                 && lines[line]
                     .get(col - 3..=col)
                     .unwrap_or_default()
-                    .into_iter()
+                    .iter()
                     .rev()
                     .collect::<String>()
                     == XMAS

@@ -38,7 +38,7 @@ fn bfs(start: Pos, end: Pos, obstacles: Vec<Pos>) -> Option<usize> {
         }
     }
 
-    dist.get(&end).map(|n| *n)
+    dist.get(&end).copied()
 }
 
 fn parse_falling_bytes(input: String) -> Vec<Pos> {

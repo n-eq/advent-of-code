@@ -59,8 +59,8 @@ pub fn main() {
     let mut graph: HashMap<Node, HashSet<Node>> = HashMap::new();
     for l in binding.lines() {
         let s = l.split('-').collect::<Vec<_>>();
-        graph.entry(s[0]).or_insert_with(HashSet::new).insert(s[1]);
-        graph.entry(s[1]).or_insert_with(HashSet::new).insert(s[0]);
+        graph.entry(s[0]).or_default().insert(s[1]);
+        graph.entry(s[1]).or_default().insert(s[0]);
     }
 
     let part1 = graph
