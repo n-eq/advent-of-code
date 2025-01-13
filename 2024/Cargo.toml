@@ -107,3 +107,7 @@ path = "bin/d23.rs"
 [[bin]]
 name = "d24"
 path = "bin/d24.rs"
+
+[[bin]]
+name = "d25"
+path = "bin/d25.rs"
