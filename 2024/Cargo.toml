@@ -97,6 +97,10 @@ name = "d20"
 path = "bin/d20.rs"
 
 [[bin]]
+name = "d21"
+path = "bin/d21.rs"
+
+[[bin]]
 name = "d22"
 path = "bin/d22.rs"
 
