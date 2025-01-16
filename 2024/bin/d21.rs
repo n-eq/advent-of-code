@@ -1,11 +1,10 @@
 use aoc::*;
 use itertools::*;
-use pathfinding::directed::astar::*;
 
 type Directions = Vec<Vec<char>>;
 
-fn generate_combinations(v: Vec<Directions>) -> Directions {
-    v.into_iter().fold(vec![Vec::new()], |acc, group| {
+fn generate_combinations(v: impl Iterator<Item = Directions>) -> Directions {
+    v.fold(vec![Vec::new()], |acc, group| {
         let mut new_result = Vec::with_capacity(acc.len() * group.len());
         for (mut prefix, suffix) in iproduct!(acc, group) {
             prefix.extend(suffix);
@@ -128,119 +127,185 @@ impl NumericKeypad {
         }
     }
 
-    fn dirs(&self, dest: char) -> Vec<Vec<DirectionalKeypad>> {
-        let mut res = vec![];
-        let paths = self.shortest_paths(NumericKeypad::from_char(dest));
-        use NumericKeypad as Nk;
-        for path in paths {
-            let mut tmp = vec![];
-            for i in 0..path.len() - 1 {
-                let s = path[i];
-                let d = path[i + 1];
-
-                match (s, d) {
-                    (Nk::Zero, Nk::Two)
-                    | (Nk::A, Nk::Three)
-                    | (Nk::One, Nk::Four)
-                    | (Nk::Two, Nk::Five)
-                    | (Nk::Three, Nk::Six)
-                    | (Nk::Four, Nk::Seven)
-                    | (Nk::Five, Nk::Eight)
-                    | (Nk::Six, Nk::Nine) => tmp.push(DirectionalKeypad::Up),
-                    (Nk::Zero, Nk::A)
-                    | (Nk::One, Nk::Two)
-                    | (Nk::Two, Nk::Three)
-                    | (Nk::Four, Nk::Five)
-                    | (Nk::Five, Nk::Six)
-                    | (Nk::Seven, Nk::Eight)
-                    | (Nk::Eight, Nk::Nine) => tmp.push(DirectionalKeypad::Right),
-                    (Nk::A, Nk::Zero)
-                    | (Nk::Three, Nk::Two)
-                    | (Nk::Two, Nk::One)
-                    | (Nk::Six, Nk::Five)
-                    | (Nk::Five, Nk::Four)
-                    | (Nk::Nine, Nk::Eight)
-                    | (Nk::Eight, Nk::Seven) => tmp.push(DirectionalKeypad::Left),
-                    (Nk::Seven, Nk::Four)
-                    | (Nk::Eight, Nk::Five)
-                    | (Nk::Nine, Nk::Six)
-                    | (Nk::Four, Nk::One)
-                    | (Nk::Five, Nk::Two)
-                    | (Nk::Six, Nk::Three)
-                    | (Nk::Two, Nk::Zero)
-                    | (Nk::Three, Nk::A) => tmp.push(DirectionalKeypad::Down),
-                    _ => unreachable!(),
-                }
-            }
-            tmp.push('A'.into());
-            res.push(tmp);
-        }
-
-        res
-    }
-
-    fn dirs_alt(&self, dest: char) -> Vec<Vec<DirectionalKeypad>> {
-        use DirectionalKeypad as Dk;
+    fn paths(&self, dest: char) -> Directions {
         use NumericKeypad::*;
-        let dest = NumericKeypad::from(dest);
-        let empty: Vec<Vec<DirectionalKeypad>> = vec![vec![]];
-        match *self {
+        let res = match *self {
             A => match dest {
-                A => empty.clone(),
-                Zero => vec![vec![Dk::Left]],
-                One => vec![
-                    vec![Dk::Left, Dk::Up, Dk::Left],
-                    vec![Dk::Up, Dk::Left, Dk::Left],
+                'A' => vec!["A"],
+                '0' => vec!["<A"],
+                '1' => vec!["<^<A", "^<<A"],
+                '2' => vec!["^<A", "<^A"],
+                '3' => vec!["^A"],
+                '4' => vec!["^^<<A", "<^^<A", "^<<^A", "^<^<A", "<^<^A"],
+                '5' => vec!["^^<A", "<^^A", "^<^A"],
+                '6' => vec!["^^A"],
+                '7' => vec![
+                    "^<^<^A", "<^^<^A", "^^<<^A", "^<<^^A", "<^<^^A", "^^^<<A", "^<^^<A", "<^^^<A",
+                    "^^<^<A",
                 ],
-                Two => vec![vec![Dk::Up, Dk::Left], vec![Dk::Left, Dk::Up]],
-                Three => vec![vec![Dk::Up]],
-                Four => vec![
-                    vec![Dk::Up, Dk::Up, Dk::Left, Dk::Left],
-                    vec![Dk::Up, Dk::Left, Dk::Left, Dk::Up],
-                    vec![Dk::Up, Dk::Left, Dk::Up, Dk::Left],
-                    vec![Dk::Left, Dk::Up, Dk::Left, Dk::Up],
-                    vec![Dk::Left, Dk::Up, Dk::Up, Dk::Left],
-                ],
-                Five => todo!(),
-                Six => todo!(),
-                Seven => todo!(),
-                Eight => todo!(),
-                Nine => todo!(),
-                X => todo!(),
+                '8' => vec!["^^^<A", "^<^^A", "<^^^A", "^^<^A"],
+                '9' => vec!["^^^A"],
+                _ => unreachable!(),
             },
-            Zero => todo!(),
-            One => todo!(),
-            Two => todo!(),
-            Three => todo!(),
-            Four => todo!(),
-            Five => todo!(),
-            Six => todo!(),
-            Seven => todo!(),
-            Eight => todo!(),
-            Nine => todo!(),
-            X => todo!(),
-        }
+            Zero => match dest {
+                'A' => vec![">A"],
+                '0' => vec!["A"],
+                '1' => vec!["^<A"],
+                '2' => vec!["^A"],
+                '3' => vec![">^A", "^>A"],
+                '4' => vec!["^^<A", "^<^A"],
+                '5' => vec!["^^A"],
+                '6' => vec![">^^A", "^>^A", "^^>A"],
+                '7' => vec!["^^^<A", "^<^^A", "^^<^A"],
+                '8' => vec!["^^^A"],
+                '9' => vec!["^^>^A", ">^^^A", "^>^^A", "^^^>A"],
+                _ => unreachable!(),
+            },
+            One => match dest {
+                'A' => vec![">>vA", ">v>A"],
+                '0' => vec![">vA"],
+                '1' => vec!["A"],
+                '2' => vec![">A"],
+                '3' => vec![">>A"],
+                '4' => vec!["^A"],
+                '5' => vec![">^A", "^>A"],
+                '6' => vec![">^>A", "^>>A", ">>^A"],
+                '7' => vec!["^^A"],
+                '8' => vec![">^^A", "^>^A", "^^>A"],
+                '9' => vec!["^>^>A", ">^^>A", "^^>>A", ">>^^A", "^>>^A", ">^>^A"],
+                _ => unreachable!(),
+            },
+            Two => match dest {
+                'A' => vec![">vA"],
+                '0' => vec!["v>A"],
+                '1' => vec!["vA"],
+                '2' => vec!["A"],
+                '3' => vec![">A"],
+                '4' => vec!["<^A", "^<A"],
+                '5' => vec!["^A"],
+                '6' => vec!["^>A", ">^A"],
+                '7' => vec!["^^<A", "^<^A", "<^^A"],
+                '8' => vec!["^^A"],
+                '9' => vec!["^^>A", "^>^A", ">^^A"],
+                _ => unreachable!(),
+            },
+            Three => match dest {
+                'A' => vec!["vA"],
+                '0' => vec!["<v<A", "v<A"],
+                '1' => vec!["<<A"],
+                '2' => vec!["<A"],
+                '3' => vec!["A"],
+                '4' => vec!["^<<A", "<^<A", "<<^A"],
+                '5' => vec!["^<A", "<^A"],
+                '6' => vec!["^A"],
+                '7' => vec!["^^<<A", "^<^<A", "<^^<A", "^<<^A", "<^<^A", "<<^^A"],
+                '8' => vec!["^^<A", "<^^A", "^<^A"],
+                '9' => vec!["^^A"],
+                _ => unreachable!(),
+            },
+            Four => match dest {
+                'A' => vec!["v>>vA", ">v>vA", ">>vvA", "v>v>A", ">vv>A"],
+                '0' => vec![">vvA", "v>vA"],
+                '1' => vec!["vA"],
+                '2' => vec![">vA", "v>A"],
+                '3' => vec![">>vA", "v>>A", ">v>A"],
+                '4' => vec!["A"],
+                '5' => vec![">A"],
+                '6' => vec![">>A"],
+                '7' => vec!["^A"],
+                '8' => vec!["^>A", ">^A"],
+                '9' => vec![">>^A", "^>>A", ">^>A"],
+                _ => unreachable!(),
+            },
+            Five => match dest {
+                'A' => vec![">vvA", "v>vA", "vv>A"],
+                '0' => vec!["vvA"],
+                '1' => vec!["<vA", "v<A"],
+                '2' => vec!["vA"],
+                '3' => vec![">vA", "v>A"],
+                '4' => vec!["<A"],
+                '5' => vec!["A"],
+                '6' => vec![">A"],
+                '7' => vec!["^<A", "<^A"],
+                '8' => vec!["^A"],
+                '9' => vec![">^A", "^>A"],
+                _ => unreachable!(),
+            },
+            Six => match dest {
+                'A' => vec!["vvA"],
+                '0' => vec!["vv<A", "v<vA", "<vvA"],
+                '1' => vec!["<<vA", "v<<A", "<v<A"],
+                '2' => vec!["<vA", "v<A"],
+                '3' => vec!["vA"],
+                '4' => vec!["<<A"],
+                '5' => vec!["<A"],
+                '6' => vec!["A"],
+                '7' => vec!["^<<A", "<^<A", "<<^A"],
+                '8' => vec!["<^A", "^<A"],
+                '9' => vec!["^A"],
+                _ => unreachable!(),
+            },
+            Seven => match dest {
+                'A' => vec![
+                    "vv>>vA", "v>v>vA", ">vv>vA", ">>vvvA", "v>>vvA", ">v>vvA", "vv>v>A", "v>vv>A",
+                    ">vvv>A",
+                ],
+                '0' => vec!["vv>vA", ">vvvA", "v>vvA"],
+                '1' => vec!["vvA"],
+                '2' => vec![">vvA", "v>vA", "vv>A"],
+                '3' => vec!["vv>>A", "v>v>A", ">vv>A", "v>>vA", ">v>vA", ">>vvA"],
+                '4' => vec!["vA"],
+                '5' => vec!["v>A", ">vA"],
+                '6' => vec![">>vA", ">v>A", "v>>A"],
+                '7' => vec!["A"],
+                '8' => vec![">A"],
+                '9' => vec![">>A"],
+                _ => unreachable!(),
+            },
+            Eight => match dest {
+                'A' => vec!["vvv>A", ">vvvA", "v>vvA", "vv>vA"],
+                '0' => vec!["vvvA"],
+                '1' => vec!["v<vA", "<vvA", "vv<A"],
+                '2' => vec!["vvA"],
+                '3' => vec!["vv>A", ">vA", "v>vA"],
+                '4' => vec!["v<A", "<vA"],
+                '5' => vec!["vA"],
+                '6' => vec!["v>A", ">vA"],
+                '7' => vec!["<A"],
+                '8' => vec!["A"],
+                '9' => vec![">A"],
+                _ => unreachable!(),
+            },
+            Nine => match dest {
+                'A' => vec!["vvvA"],
+                '0' => vec!["<vvvA", "v<vvA", "vv<vA", "vvv<A"],
+                '1' => vec!["<<vvA", "<v<vA", "v<<vA", "vv<<A", "<vv<A", "v<v<A"],
+                '2' => vec!["<vvA", "v<vA", "vv<A"],
+                '3' => vec!["vvA"],
+                '4' => vec!["<<vA", "<v<A", "v<<A"],
+                '5' => vec!["<vA", "v<A"],
+                '6' => vec!["vA"],
+                '7' => vec!["<<A"],
+                '8' => vec!["<A"],
+                '9' => vec!["A"],
+                _ => unreachable!(),
+            },
+            X => unreachable!(),
+        };
+        res.iter()
+            .map(|s| s.chars().collect::<Vec<char>>())
+            .collect()
     }
 
     fn directions(&self, buttons: Vec<char>) -> Directions {
         let mut state = *self;
-        let mut res: Vec<Vec<Vec<DirectionalKeypad>>> = vec![];
-        for b in buttons {
-            let dirs = state.dirs(b);
-            res.push(dirs);
-
+        let res = buttons.iter().map(|&b| {
+            let r = state.paths(b);
             state = NumericKeypad::from_char(b);
-        }
+            r
+        });
 
-        generate_combinations(
-            res.iter()
-                .map(|r| {
-                    r.iter()
-                        .map(|v| v.iter().copied().map(Into::into).collect::<Vec<char>>())
-                        .collect::<Directions>()
-                })
-                .collect::<Vec<Directions>>(),
-        )
+        generate_combinations(res)
     }
 
     fn from_char(c: char) -> Self {
@@ -260,66 +325,6 @@ impl NumericKeypad {
             _ => unreachable!("Unknown button in the numeric pad: {c:?}"),
         }
     }
-
-    fn pos_in_grid(&self) -> (usize, usize) {
-        let grid: Vec<Vec<_>> = [
-            vec!['7', '8', '9'],
-            vec!['4', '5', '6'],
-            vec!['1', '2', '3'],
-            vec!['X', '0', 'A'],
-        ]
-        .iter()
-        .map(|v| {
-            v.iter()
-                .map(|b| NumericKeypad::from(*b))
-                .collect::<Vec<_>>()
-        })
-        .collect::<Vec<_>>();
-
-        let mut pos = (0, 0);
-        pos.0 = grid.iter().position(|v| v.contains(self)).unwrap();
-        pos.1 = grid[pos.0].iter().position(|c| c == self).unwrap();
-        pos
-    }
-
-    fn successors(&self) -> Vec<(NumericKeypad, usize)> {
-        use NumericKeypad::*;
-        match self {
-            A => vec![Zero, Three],
-            Zero => vec![Two, A],
-            One => vec![Two, Four],
-            Two => vec![Zero, One, Three, Five],
-            Three => vec![Two, A, Six],
-            Four => vec![One, Five, Seven],
-            Five => vec![Two, Four, Six, Eight],
-            Six => vec![Three, Five, Nine],
-            Seven => vec![Four, Eight],
-            Eight => vec![Five, Seven, Nine],
-            Nine => vec![Six, Eight],
-            X => unreachable!(),
-        }
-        .into_iter()
-        .map(|s| (s, 1))
-        .collect()
-    }
-
-    fn manhattan(&self, other: NumericKeypad) -> usize {
-        let start = self.pos_in_grid();
-        let end = other.pos_in_grid();
-
-        start.0.abs_diff(end.0) + start.1.abs_diff(end.1)
-    }
-
-    fn shortest_paths(&self, other: NumericKeypad) -> Vec<Vec<NumericKeypad>> {
-        astar_bag_collect(
-            self,
-            |&n| n.successors(),
-            |&n| n.manhattan(other),
-            |&n| n == other,
-        )
-        .unwrap()
-        .0
-    }
 }
 
 impl DirectionalKeypad {
@@ -334,104 +339,66 @@ impl DirectionalKeypad {
         }
     }
 
-    fn dirs(&self, dest: char) -> Vec<Vec<DirectionalKeypad>> {
-        let mut res = vec![];
-        let paths = self.shortest_paths(DirectionalKeypad::from_char(dest));
-        use DirectionalKeypad as Dk;
-
-        // TODO: use windows() and map to collect directly into a vector
-        for path in paths {
-            let mut tmp = vec![];
-            for i in 0..path.len() - 1 {
-                let s = path[i];
-                let d = path[i + 1];
-
-                match (s, d) {
-                    (Dk::Down, Dk::Up) | (Dk::Right, Dk::A) => tmp.push(DirectionalKeypad::Up),
-                    (Dk::Left, Dk::Down) | (Dk::Up, Dk::A) | (Dk::Down, Dk::Right) => {
-                        tmp.push(DirectionalKeypad::Right)
-                    }
-                    (Dk::A, Dk::Up) | (Dk::Right, Dk::Down) | (Dk::Down, Dk::Left) => {
-                        tmp.push(DirectionalKeypad::Left)
-                    }
-                    (Dk::Up, Dk::Down) | (Dk::A, Dk::Right) => tmp.push(DirectionalKeypad::Down),
-                    _ => unreachable!(),
-                }
-            }
-            tmp.push('A'.into());
-            res.push(tmp);
-        }
-
-        res
-    }
-    fn dirs_alt(&self, dest: char) -> Vec<Vec<DirectionalKeypad>> {
+    fn paths(&self, dest: char) -> Directions {
         use DirectionalKeypad::*;
-        let dest: DirectionalKeypad = DirectionalKeypad::from_char(dest);
-        match *self {
+        let res = match *self {
             A => match dest {
-                A => vec![vec![]],
-                Up => vec![vec![Left]],
-                Right => vec![vec![Down]],
-                Down => vec![vec![Down, Left], vec![Left, Down]],
-                Left => vec![vec![Down, Left, Left], vec![Left, Down, Left]],
-                X => unreachable!(),
+                'A' => vec!["A"],
+                '^' => vec!["<A"],
+                '>' => vec!["vA"],
+                'v' => vec!["v<A", "<vA"],
+                '<' => vec!["v<<A", "<v<A"],
+                _ => unreachable!(),
             },
             Up => match dest {
-                Up => vec![vec![]],
-                A => vec![vec![Right]],
-                Down => vec![vec![Down]],
-                Right => vec![vec![Right, Down], vec![Down, Right]],
-                Left => vec![vec![Down, Left], vec![Down, Left]],
-                X => unreachable!(),
+                '^' => vec!["A"],
+                'A' => vec![">A"],
+                'v' => vec!["vA"],
+                '>' => vec![">vA", "v>A"],
+                '<' => vec!["v<A", "<vA"],
+                _ => unreachable!(),
             },
             Left => match dest {
-                Left => vec![vec![]],
-                Down => vec![vec![Right]],
-                Right => vec![vec![Right, Right]],
-                Up => vec![vec![Right, Up]],
-                A => vec![vec![Right, Right, Up], vec![Right, Up, Right]],
-                X => unreachable!(),
+                '<' => vec!["A"],
+                'v' => vec![">A"],
+                '>' => vec![">>A"],
+                '^' => vec![">^A"],
+                'A' => vec![">>^A", ">^>A"],
+                _ => unreachable!(),
             },
             Down => match dest {
-                Down => vec![vec![]],
-                Left => vec![vec![Left]],
-                Right => vec![vec![Right]],
-                Up => vec![vec![Up]],
-                A => vec![vec![Up, Right], vec![Right, Up]],
-                X => unreachable!(),
+                'v' => vec!["A"],
+                '<' => vec!["<A"],
+                '>' => vec![">A"],
+                '^' => vec!["^A"],
+                'A' => vec!["^>A", ">^A"],
+                _ => unreachable!(),
             },
             Right => match dest {
-                Right => vec![vec![]],
-                Down => vec![vec![Left]],
-                Left => vec![vec![Left, Left]],
-                A => vec![vec![Up]],
-                Up => vec![vec![Up, Left], vec![Left, Up]],
-                X => unreachable!(),
+                '>' => vec!["A"],
+                'v' => vec!["<A"],
+                '<' => vec!["<<A"],
+                'A' => vec!["^A"],
+                '^' => vec!["^<A", "<^A"],
+                _ => unreachable!(),
             },
-            X => unreachable!(),
-        }
+            _ => unreachable!(),
+        };
+        res.iter()
+            .map(|s| s.chars().collect::<Vec<char>>())
+            .collect()
     }
 
     fn directions(&self, buttons: Vec<char>) -> Directions {
+
         let mut state = *self;
-        let mut res: Vec<Vec<Vec<DirectionalKeypad>>> = vec![];
-        for b in buttons {
-            // TODO: use dirs_alt (quicker but buggy...)
-            let dirs = state.dirs(b);
-            res.push(dirs);
-
+        let res = buttons.iter().map(|&b| {
+            let r = state.paths(b);
             state = DirectionalKeypad::from_char(b);
-        }
+            r
+        });
 
-        generate_combinations(
-            res.iter()
-                .map(|r| {
-                    r.iter()
-                        .map(|v| v.iter().copied().map(Into::into).collect::<Vec<char>>())
-                        .collect::<Directions>()
-                })
-                .collect::<Vec<Directions>>(),
-        )
+        generate_combinations(res)
     }
 
     fn from_char(c: char) -> Self {
@@ -445,74 +412,24 @@ impl DirectionalKeypad {
             _ => unreachable!("Unknown button in the directional pad: {c:?}"),
         }
     }
-
-    fn pos_in_grid(&self) -> (usize, usize) {
-        let grid: Vec<Vec<_>> = [vec!['X', '^', 'A'], vec!['<', 'v', '>']]
-            .iter()
-            .map(|v| {
-                v.iter()
-                    .map(|b| DirectionalKeypad::from(*b))
-                    .collect::<Vec<_>>()
-            })
-            .collect::<Vec<_>>();
-
-        let mut pos = (0, 0);
-        pos.0 = grid.iter().position(|v| v.contains(self)).unwrap();
-        pos.1 = grid[pos.0].iter().position(|c| c == self).unwrap();
-        pos
-    }
-
-    fn successors(&self) -> Vec<(DirectionalKeypad, usize)> {
-        use DirectionalKeypad::*;
-        match self {
-            A => vec![Up, Right],
-            Up => vec![A, Down],
-            Down => vec![Up, Right, Left],
-            Right => vec![A, Down],
-            Left => vec![Down],
-            X => unreachable!(),
-        }
-        .iter()
-        .copied()
-        .map(|s| (s, 1))
-        .collect()
-    }
-
-    fn manhattan(&self, other: DirectionalKeypad) -> usize {
-        let start = self.pos_in_grid();
-        let end = other.pos_in_grid();
-
-        start.0.abs_diff(end.0) + start.1.abs_diff(end.1)
-    }
-
-    fn shortest_paths(&self, other: DirectionalKeypad) -> Vec<Vec<DirectionalKeypad>> {
-        astar_bag_collect(
-            self,
-            |&n| n.successors(),
-            |&n| n.manhattan(other),
-            |&n| n == other,
-        )
-        .unwrap()
-        .0
-    }
 }
 
-fn get_code_complexity(code: Vec<char>) -> usize {
+fn get_code_complexity<const NB_ROBOTS: usize>(code: Vec<char>) -> usize {
     let mut res = NumericKeypad::A.directions(code);
-    res.sort_by_key(|a| a.len());
+    res.sort_unstable_by_key(|a| a.len());
     res = res
         .iter()
         .filter(|r| r.len() == res[0].len())
         .cloned()
         .collect();
 
-    for _ in 0..2 {
+    for _ in 0..NB_ROBOTS - 1 {
         res = res
             .into_iter()
             .flat_map(|r| DirectionalKeypad::A.directions(r))
             .collect();
 
-        res.sort_by_key(|a| a.len());
+        res.sort_unstable_by_key(|a| a.len());
         res = res
             .iter()
             .filter(|r| r.len() == res[0].len())
@@ -526,14 +443,15 @@ fn get_code_complexity(code: Vec<char>) -> usize {
 pub fn main() {
     let mut part1: usize = 0;
     for code in std::fs::read_to_string(input!()).unwrap().lines() {
-        let num = code
-            .chars()
+        let chars = code.chars();
+        let num = chars
+            .clone()
             .filter(|c| c.is_ascii_digit())
             .collect::<Vec<_>>()
             .iter()
             .fold(0, |acc, x| x.to_digit(10).unwrap() + 10 * acc) as usize;
 
-        part1 += num * get_code_complexity(code.chars().collect());
+        part1 += num * get_code_complexity(chars.collect());
     }
     println!("{part1:?}");
 }
