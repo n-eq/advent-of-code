@@ -1135,6 +1135,7 @@ dependencies = [
  "image",
  "itertools 0.13.0",
  "num",
+ "once_cell",
  "pathfinding",
  "petgraph",
  "regex",
