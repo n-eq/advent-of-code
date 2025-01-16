@@ -7,7 +7,7 @@ Solutions to (some) of the [Advent of Code](https://adventofcode.com/) challenge
 | 2021 | ONGOING | C, Rust
 | 2022 | ONGOING | C/C++, Rust, Python |
 | 2023 | DONE    | C           |
-| 2024 | ONGOING | Rust        |
+| 2024 | DONE    | Rust        |
 
 Mainly in C, Rust, and sometimes Python.
 
